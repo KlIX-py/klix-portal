@@ -19,16 +19,21 @@ export function useMediaFile() {
     revokeProcessed(); if (activeUrl.current) URL.revokeObjectURL(activeUrl.current)
     const url = URL.createObjectURL(file); activeUrl.current = url; setStatus('loading'); setError(null)
     const kind = file.type.startsWith('video/') ? 'video' : 'image'
-    const element = kind === 'video' ? document.createElement('video') : new Image()
+    if (kind === 'video') {
+      const metadata: MediaMetadata = { name: file.name, bytes: file.size, width: 0, height: 0, type: file.type, kind }
+      setAsset({ file, url, metadata }); setStatus('ready')
+      return
+    }
+    const element = new Image()
     const complete = () => {
-      const width = kind === 'video' ? (element as HTMLVideoElement).videoWidth : (element as HTMLImageElement).naturalWidth
-      const height = kind === 'video' ? (element as HTMLVideoElement).videoHeight : (element as HTMLImageElement).naturalHeight
-      const duration = kind === 'video' ? (element as HTMLVideoElement).duration : undefined
+      const width = element.naturalWidth
+      const height = element.naturalHeight
+      const duration = undefined
       if (!width || !height) { setStatus('error'); setError('This file could not be decoded by this browser.'); return }
       const metadata: MediaMetadata = { name: file.name, bytes: file.size, width, height, duration, type: file.type, kind }
       setAsset({ file, url, metadata }); setStatus('ready')
     }
-    element.addEventListener(kind === 'video' ? 'loadedmetadata' : 'load', complete, { once: true })
+    element.addEventListener('load', complete, { once: true })
     element.addEventListener('error', () => { setStatus('error'); setError('This media file could not be read.'); }, { once: true })
     element.src = url
   }, [revokeProcessed])
@@ -42,5 +47,9 @@ export function useMediaFile() {
     setAsset(current => current?.url === sourceUrl ? { ...current, processedUrl: url, processedBlob: blob } : current)
     return true
   }, [revokeProcessed])
-  return { asset, status, error, load, clear, startProcessing, finishProcessing, failProcessing, setProcessedOutput }
+  const updateVideoMetadata = useCallback((sourceUrl: string, width: number, height: number, duration: number) => {
+    if (activeUrl.current !== sourceUrl) return
+    setAsset(current => current?.url === sourceUrl ? { ...current, metadata: { ...current.metadata, width, height, duration } } : current)
+  }, [])
+  return { asset, status, error, load, clear, startProcessing, finishProcessing, failProcessing, setProcessedOutput, updateVideoMetadata }
 }

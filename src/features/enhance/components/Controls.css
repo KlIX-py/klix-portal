@@ -1,0 +1,15 @@
+.action-group {
+  display: grid;
+  gap: 10px;
+}
+
+.action-group .export {
+  width: 100%;
+}
+
+.capability-warning {
+  margin: 12px 0 0;
+  color: var(--orange, #df7a2f);
+  font-size: 12px;
+  line-height: 1.45;
+}
