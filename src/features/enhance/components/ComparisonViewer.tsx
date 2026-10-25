@@ -13,5 +13,5 @@ export function ComparisonFrame({ children, afterPresentation, label }: FramePro
 }
 
 export function ComparisonViewer({ asset }: { asset: MediaAsset }) {
-  return <ComparisonFrame label="SOURCE"><img className="viewer-media" src={asset.url} alt={`Preview of ${asset.metadata.name}`} /></ComparisonFrame>
+  return <ComparisonFrame label={asset.processedUrl ? 'FAST' : 'SOURCE'} afterPresentation={asset.processedUrl ? <img className="viewer-media" src={asset.processedUrl} alt={`FAST processed preview of ${asset.metadata.name}`} /> : undefined}><img className="viewer-media" src={asset.url} alt={`Preview of ${asset.metadata.name}`} /></ComparisonFrame>
 }
