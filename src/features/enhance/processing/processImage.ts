@@ -3,6 +3,7 @@ import { applyContrast } from './contrast'
 import { applySaturation } from './saturation'
 import { applySharpen } from './sharpen'
 import type { FastProcessingSettings } from './types'
+import { processImageInWorker, supportsFastWorker } from './workerClient'
 
 const outputType = (source: Blob) => ['image/png', 'image/jpeg', 'image/webp'].includes(source.type) ? source.type : 'image/png'
 
@@ -10,7 +11,7 @@ function canvasBlob(canvas: HTMLCanvasElement, type: string) {
   return new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('The browser could not encode the processed image.')), type, type === 'image/jpeg' || type === 'image/webp' ? 0.92 : undefined))
 }
 
-export async function processImage(source: Blob, settings: FastProcessingSettings): Promise<Blob> {
+async function processImageOnMainThread(source: Blob, settings: FastProcessingSettings): Promise<Blob> {
   const bitmap = await createImageBitmap(source)
   try {
     const canvas = document.createElement('canvas')
@@ -28,4 +29,16 @@ export async function processImage(source: Blob, settings: FastProcessingSetting
   } finally {
     bitmap.close()
   }
+}
+
+export async function processImage(source: Blob, settings: FastProcessingSettings): Promise<Blob> {
+  if (supportsFastWorker()) {
+    const bitmap = await createImageBitmap(source)
+    try {
+      return await processImageInWorker(bitmap, settings, outputType(source))
+    } catch {
+      return processImageOnMainThread(source, settings)
+    }
+  }
+  return processImageOnMainThread(source, settings)
 }
