@@ -39,7 +39,7 @@ export function useMediaFile() {
     if (activeUrl.current !== sourceUrl) return false
     revokeProcessed()
     const url = URL.createObjectURL(blob); processedUrl.current = url
-    setAsset(current => current?.url === sourceUrl ? { ...current, processedUrl: url } : current)
+    setAsset(current => current?.url === sourceUrl ? { ...current, processedUrl: url, processedBlob: blob } : current)
     return true
   }, [revokeProcessed])
   return { asset, status, error, load, clear, startProcessing, finishProcessing, failProcessing, setProcessedOutput }
